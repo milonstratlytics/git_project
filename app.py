@@ -1,79 +1,76 @@
-import numpy as np
-import pandas as pd
-# import streamlit as st 
+from pywebio.platform.flask import webio_view
+from pywebio import STATIC_PATH
+from flask import Flask, send_from_directory
+from pywebio.input import *
+from pywebio.output import *
+import argparse
+from pywebio import start_server
+import time
 from resume_scoring import predict_resume_scoring
-
-# def main():
-#     st.title("Welcome to Resume Scoring Process of Stratlytic")
-#     html_temp = """
-#     <div style="background-color:tomato;padding:10px">
-#     <h2 style="color:white;text-align:center;">Resume Scoring App </h2>
-#     <p style="color:white;text-align:center;">Please fill up following inputs </p>
-#     </div>
-#     """
-#     st.markdown(html_temp,unsafe_allow_html=True)
-#     job_title = st.text_input("Job Title","Enter job title you are looking for")
-#     skill = st.text_input("Skills(comma-seperated)","Enter all required skills you are looking for")
-#     education= st.selectbox("Education", ["Bachelor's Degree", "Master's Degree", "PhD"])
-#     experience = st.slider("Experience (in years)", min_value=0, max_value=20, value=0)
-#     result=""
-#     if st.button("Predict"):
-#         result=predict_resume_scoring(job_title,skill,education,experience)
-#     st.success('The output is {}'.format(result))
-#     if st.button("About"):
-#         st.text("Lets LEarn")
-#         st.text("Built with Streamlit")
-
-# if __name__=='__main__':
-#     main()
-
-
-# from flask import Flask, render_template, request
-
-# app = Flask(__name__)
-# # app.config.from_object(__name__)
-
-# @app.route('/')
-# def welcome():
-#     return render_template('form.html')
-
-# @app.route('/', methods=['POST'])
-# def result():
-#     var_1 = request.form.get("var_1", type=int, default=0)
-#     var_2 = request.form.get("var_2", type=int, default=0)
-#     job_title = request.form.get("var_1")
-#     skill = request.form.get("var_2")
-#     education= request.form.get("education")
-#     experience = int(request.form.get('experience'))   
-#     result=predict_resume_scoring(job_title,skill,education,experience)
-#     entry = result
-#     return render_template('form.html', entry=entry)
-
-# if __name__ == '__main__':
-#     app.run(debug=True)
-
-
-from flask import Flask, render_template, request, jsonify
-# from resume_scoring import predict_resume_scoring
-
-from flask import Flask, render_template, request
-
 app = Flask(__name__)
+import os
+import shutil
 
-@app.route('/', methods=['GET'])
-def index():
-    return render_template('index.html', output=''),render_template('form.html', output='')
+def cv_parser():
+    
+    
+    put_code("-----<< Welcome to CV Parser Application >>-----")
+    count=0
+    add_more = True
+    
+    while add_more: 
+        
+        info = input_group("Enter Details : ",[
+          input("Enter Job Title you are looking for :", name='job_title'),
+          input("Enter Skillset you are looking for :", name='skill'),
+          input("Enter Education you are looking for :", name='education'),
+          
+          input("Enter years of experience you are looking for :", name='experience',type=FLOAT)
+        ])
+        print(info['job_title'], info['skill'],info['education'],info['experience'])
+        job_title=info['job_title']
+        skill=info['skill']
+        education = info['education']
+        experience = info['experience']
+        
+            
+        put_text('You have searched fors Job Tile : ',job_title)
+        put_text('Selected Skillset :' ,skill)
+        put_text('Required Degree :' ,education)
+        put_text('Required experience :' ,experience)
+        put_text('------------------------------------------------')
+        #put_text(df)
+        with put_loading():
+            put_code("Plz Wait..We are working on magic !! Fetching top CVs for you..")
+            time.sleep(3)  # Some time-consuming operations
+        put_text("Matched Results : ")
+        
+        
+        selected_resume = predict_resume_scoring(job_title,skill,education,experience)
+        put_table([
+                    {"Job_Title":job_title,"SkillSet":skill,"TopCVFound":selected_resume}
+                ], header=["Job_Title", "SkillSet","TopCVFound"]) 
 
-@app.route('/predict', methods=['POST'])
-def predict():
-    job_title = request.form.get('job_title')
-    skill = request.form.get('skill')
-    education = request.form.get('education')
-    experience = int(request.form.get('experience'))
+        put_code("**Note: All the matched CVs are stored in 04_Matched_CVs_pdf folder")   
+        
+        add_more = actions(label="Would you like to search more ?", 
+                        buttons=[{'label': 'Yes', 'value': True}, 
+                                 {'label':'No', 'value': False}])
+        
+        count= count+1
+        put_text("--------------------------")
+        put_text(f"You have searched for {count} CVs | Search results shown above. ")
+        
+        put_text("--------------------------")
+        #clear(scope=- 1) 
+      
+    put_code("----- Thank You for using the CV Parser Application -----")
 
-    result=predict_resume_scoring(job_title,skill,education,experience)
 
-    return render_template('index.html', output='The output is {}'.format(result))
 
-if __name__ == '__main__':
-    app.run()
+app.add_url_rule('/cv_parser', 'webio_view', webio_view( cv_parser),
+            methods=['GET', 'POST', 'OPTIONS'])
+
+
+
+app.run(host='localhost', port=80)
