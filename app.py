@@ -137,7 +137,7 @@ def cv_parser():
 
 
 
-app.add_url_rule('/cv_parser_v1', 'webio_view', webio_view( cv_parser),
+app.add_url_rule('/resume_scoring_v1', 'webio_view', webio_view( cv_parser),
             methods=['GET', 'POST', 'OPTIONS'])
 
 
