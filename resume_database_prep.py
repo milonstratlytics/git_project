@@ -1,5 +1,8 @@
 import re
 import nltk
+from nltk.corpus import stopwords
+stop = stopwords.words('english')
+from nltk.corpus import wordnet
 import os
 from pdfminer.pdfinterp import PDFResourceManager, PDFPageInterpreter
 from pdfminer.converter import TextConverter
